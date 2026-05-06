@@ -1,3 +1,11 @@
+mysql:
+  port: "3306"
+  config: charset=utf8mb4&parseTime=True&loc=Local
+  dbname: my-works-hub
+  username: root
+  password: "123123"
+  path: 127.0.0.1
+
 admin:
   # 管理端固定 token（永远只有一个）。你第一次访问会走 /admin/login?token=xxx
   # 后续管理端请求也都应携带该 token（建议走 Header: X-Admin-Token）。

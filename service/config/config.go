@@ -12,17 +12,24 @@ import (
 var AppConfig *Config
 
 type Config struct {
+	MySQL MySQLConfig     `yaml:"mysql"` // 嵌套 MySQL 配置（yaml 键名 mysql 对应）
 	Admin AdminConfig     `yaml:"admin"`
 	App   AppPublicConfig `yaml:"app"` // 可选：公网主站地址等
 }
 
 // AppPublicConfig 用于区分本地与线上（注入到用户 HTML 的脚本无法读前端 .env）。
 type AppPublicConfig struct {
-	// PortalOrigin 主站前端根地址，不要末尾斜杠，例如 https://lyyxy.top 或 http://localhost:5173
-	PortalOrigin string `yaml:"portal_origin"`
-	// HtmlPublicHost 用户 HTML 访问用的主机后缀（不含端口），形如 htmlhub.example.com。
-	// 完整访问域名为四级：{slug}.HtmlPublicHost（例如 todo.htmlhub.lyyxy.top），三级 htmlhub.* 专用于本项目，根域其它三级可留给其它项目。
+	PortalOrigin   string `yaml:"portal_origin"`
 	HtmlPublicHost string `yaml:"html_public_host"`
+}
+type MySQLConfig struct {
+	Prefix   string `yaml:"prefix"`   // 表前缀（yaml 键名对应）
+	Port     string `yaml:"port"`     // 端口
+	Config   string `yaml:"config"`   // 连接参数（字符集等）
+	DBName   string `yaml:"dbname"`   // 数据库名（yaml 中的 db-name 对应结构体 DBName）
+	Username string `yaml:"username"` // 用户名
+	Password string `yaml:"password"` // 密码
+	Path     string `yaml:"path"`     // 数据库地址（yaml 中的 path 对应结构体 Path）
 }
 
 // AdminConfig 管理端一对一密钥配置：
@@ -49,7 +56,7 @@ func InitConfig() {
 			"读取配置文件失败: %v\n"+
 				"请任选其一：\n"+
 				"1) 将 config.yaml 放在可执行文件同级的 config/ 目录下；\n"+
-				"2) 设置环境变量 CONFIG_PATH 为包含 config.yaml 的目录（例如 /www/wwwroot/htmlhub/service/config）；\n"+
+				"2) 设置环境变量 CONFIG_PATH 为包含 config.yaml 的目录（例如 /www/wwwroot/workhub/service/config）；\n"+
 				"3) 在进程守护里把工作目录设为 service 目录。",
 			err,
 		)

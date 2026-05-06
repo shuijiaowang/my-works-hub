@@ -1,10 +1,10 @@
 package api
 
 import (
-	"htmlhub/config"
-	"htmlhub/middleware"
-	"htmlhub/util/response"
 	"strings"
+	"workhub/config"
+	"workhub/middleware"
+	"workhub/util/response"
 
 	"github.com/gin-gonic/gin"
 )

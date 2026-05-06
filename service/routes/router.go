@@ -1,8 +1,8 @@
 package routes
 
 import (
-	"htmlhub/api"
-	"htmlhub/middleware"
+	"workhub/api"
+	"workhub/middleware"
 
 	"github.com/gin-gonic/gin"
 )

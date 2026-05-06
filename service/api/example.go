@@ -1,8 +1,8 @@
 package api
 
 import (
-	"htmlhub/model/request"
-	"htmlhub/util/response"
+	"workhub/model/request"
+	"workhub/util/response"
 
 	"github.com/gin-gonic/gin"
 )

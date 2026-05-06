@@ -1,9 +1,9 @@
 package main
 
 import (
-	"htmlhub/config"
-	"htmlhub/routes"
 	"log"
+	"workhub/config"
+	"workhub/routes"
 )
 
 func main() {

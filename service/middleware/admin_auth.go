@@ -1,9 +1,9 @@
 package middleware
 
 import (
-	"htmlhub/config"
-	"htmlhub/util/response"
 	"strings"
+	"workhub/config"
+	"workhub/util/response"
 
 	"github.com/gin-gonic/gin"
 )
