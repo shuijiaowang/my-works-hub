@@ -1,9 +1,14 @@
 package api
 
 import (
+	"fmt"
+	"regexp"
 	"strings"
+	"time"
 	"workhub/config"
+	"workhub/db"
 	"workhub/middleware"
+	"workhub/model"
 	"workhub/util/response"
 
 	"github.com/gin-gonic/gin"
@@ -53,4 +58,74 @@ func (a *AdminApi) Login(c *gin.Context) {
 
 func (a *AdminApi) Ping(c *gin.Context) {
 	response.OkWithMessage("admin pong", c)
+}
+
+type AdminCreateProjectRequest struct {
+	Name        string     `json:"name"`
+	FolderName  string     `json:"folderName"`
+	IsPublic    *bool      `json:"isPublic"`
+	Intro       string     `json:"intro"`
+	CodeStartAt *time.Time `json:"codeStartAt"`
+	GitRepo     string     `json:"gitRepo"`
+	Guide       string     `json:"guide"`
+	Tags        string     `json:"tags"`
+}
+
+func (a *AdminApi) CreateProject(c *gin.Context) {
+	var req AdminCreateProjectRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+
+	name := strings.TrimSpace(req.Name)
+	if name == "" {
+		response.FailWithMessage("name 不能为空", c)
+		return
+	}
+
+	folder := strings.TrimSpace(req.FolderName)
+	if folder == "" {
+		folder = slugify(name)
+		if folder == "" {
+			folder = fmt.Sprintf("project-%d", time.Now().Unix())
+		}
+	}
+
+	isPublic := true
+	if req.IsPublic != nil {
+		isPublic = *req.IsPublic
+	}
+
+	codeStartAt := time.Now()
+	if req.CodeStartAt != nil && !req.CodeStartAt.IsZero() {
+		codeStartAt = *req.CodeStartAt
+	}
+
+	p := model.Project{
+		Name:        name,
+		FolderName:  folder,
+		IsPublic:    isPublic,
+		Intro:       strings.TrimSpace(req.Intro),
+		CodeStartAt: codeStartAt,
+		GitRepo:     strings.TrimSpace(req.GitRepo),
+		Guide:       req.Guide,
+		Tags:        strings.TrimSpace(req.Tags),
+	}
+
+	if err := db.DB.Create(&p).Error; err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithDetailed(p, "创建成功", c)
+}
+
+var nonWord = regexp.MustCompile(`[^a-zA-Z0-9_-]+`)
+
+func slugify(s string) string {
+	s = strings.TrimSpace(strings.ToLower(s))
+	s = strings.ReplaceAll(s, " ", "-")
+	s = nonWord.ReplaceAllString(s, "-")
+	s = strings.Trim(s, "-")
+	return s
 }

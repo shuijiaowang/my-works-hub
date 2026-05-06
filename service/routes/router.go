@@ -25,6 +25,7 @@ func SetupRouter() *gin.Engine {
 		admin.POST("/login", apiGroup.AdminApi.Login)
 		admin.Use(middleware.AdminAuth())
 		admin.GET("/ping", apiGroup.AdminApi.Ping)
+		admin.POST("/projects", apiGroup.AdminApi.CreateProject)
 	}
 
 	return r

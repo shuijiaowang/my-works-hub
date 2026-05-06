@@ -3,11 +3,15 @@ package main
 import (
 	"log"
 	"workhub/config"
+	"workhub/db"
 	"workhub/routes"
 )
 
 func main() {
 	config.InitConfig() //读取配置文件
+	if err := db.InitDB(); err != nil {
+		log.Fatalf("数据库初始化失败: %v", err)
+	}
 
 	// 创建路由
 	r := routes.SetupRouter()
