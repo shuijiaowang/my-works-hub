@@ -1,0 +1,11 @@
+admin:
+  # 管理端固定 token（永远只有一个）。你第一次访问会走 /admin/login?token=xxx
+  # 后续管理端请求也都应携带该 token（建议走 Header: X-Admin-Token）。
+  token: "CHANGE_ME_ADMIN_TOKEN"
+  # 管理端登录密码（用于 /admin/login 的密码校验）
+  password: "CHANGE_ME_ADMIN_PASSWORD"
+
+app:
+  portal_origin: "http://localhost:5173"
+  html_public_host: ""
+
