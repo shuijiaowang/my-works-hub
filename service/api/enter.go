@@ -8,6 +8,7 @@ import (
 type ApiGroup struct {
 	ExampleApi
 	AdminApi
+	ProjectApi
 }
 
 var (

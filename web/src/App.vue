@@ -7,6 +7,7 @@ import { RouterView } from 'vue-router'
     <header class="top-nav">
       <div class="left-links">
         <router-link to="/">主页</router-link>
+        <router-link to="/projects">项目全查</router-link>
         <router-link to="/admin">管理</router-link>
       </div>
     </header>

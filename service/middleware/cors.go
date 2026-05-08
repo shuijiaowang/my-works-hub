@@ -19,7 +19,7 @@ func Cors() gin.HandlerFunc {
 		}
 
 		// 允许的请求头（包含前端可能传递的所有头）
-		c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, Origin, Accept")
+		c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, Origin, Accept, X-Admin-Token")
 		// 允许的请求方法
 		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH")
 		// 允许前端获取的头
