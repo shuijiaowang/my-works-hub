@@ -40,38 +40,22 @@ func coverUrlFromMediaIndex(proj model.Project) string {
 		return ""
 	}
 
-	// "index1" 优先，其次取最小 order；优先图片。
-	var best *util.MediaItem
+	items = util.NormalizeAndSortMedia(items)
+	best := &items[0]
 	for i := range items {
-		it := &items[i]
-		if best == nil {
-			best = it
-			continue
-		}
-		if it.Order == 1 && best.Order != 1 {
-			best = it
-			continue
-		}
-		if best.Order == 1 && it.Order != 1 {
-			continue
-		}
-		if it.Order < best.Order {
-			best = it
-			continue
-		}
-		if it.Order == best.Order && best.Kind != util.MediaKindImage && it.Kind == util.MediaKindImage {
-			best = it
-			continue
+		if items[i].Kind == util.MediaKindImage {
+			best = &items[i]
+			break
 		}
 	}
-	if best == nil || best.FileName == "" {
+	if best.FileName == "" {
 		return ""
 	}
 	return filepath.ToSlash(filepath.Join("/api/resources", proj.FolderName, "media", best.FileName))
 }
 
 // All returns ALL projects, plus:
-// - coverUrl: project media cover (prefer index1)
+// - coverUrl: first ordered media item (prefer image)
 //
 // Both normal users and admins can call it (no auth guard).
 func (p *ProjectApi) All(c *gin.Context) {

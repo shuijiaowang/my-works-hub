@@ -44,7 +44,6 @@ const normalizeLinks = (raw) => {
 
 const projectLinks = computed(() => normalizeLinks(project.value))
 const projectGuide = computed(() => project.value?.Guide ?? project.value?.guide ?? '')
-const projectPublicText = computed(() => String(project.value?.IsPublic ?? project.value?.isPublic ?? ''))
 const tagsList = computed(() => {
   const raw = project.value?.Tags ?? project.value?.tags ?? ''
   return String(raw)
@@ -253,17 +252,14 @@ const setActiveMedia = (m) => {
           <span class="crumb-current">详情</span>
         </div>
         <h1 class="title">{{ projectName || '项目详情' }}</h1>
-        <div v-if="project" class="sub">
-          <span class="muted">ID: {{ project?.ID || project?.id }}</span>
-          <span class="sep">·</span>
-          <span class="muted">folder: {{ project?.FolderName || project?.folderName }}</span>
+        <div v-if="tagsList.length" class="header-tags">
+          <span v-for="t in tagsList" :key="t" class="header-tag">{{ t }}</span>
         </div>
       </div>
 
       <div class="actions">
-        <el-button @click="router.push('/projects')">返回列表</el-button>
-        <el-button v-if="canEdit" type="primary" :disabled="loading || !project" @click="enterEdit">管理/修改</el-button>
-        <el-button v-else :disabled="loading || !project" @click="enterEdit">管理/修改（需管理员）</el-button>
+        <button class="back-btn" @click="router.push('/projects')">← 返回</button>
+        <el-button v-if="canEdit" type="primary" size="small" :disabled="loading || !project" @click="enterEdit">编辑</el-button>
       </div>
     </div>
 
@@ -272,85 +268,76 @@ const setActiveMedia = (m) => {
     <el-skeleton v-if="loading" :rows="8" animated style="margin-top: 12px" />
 
     <section v-else-if="project" class="layout">
-      <div class="content">
-        <div class="hero">
-          <div class="hero-media">
-            <div v-if="mediaLoading" class="hero-empty muted">媒体加载中...</div>
-            <div v-else-if="!mediaItems?.length" class="hero-empty muted">暂无媒体</div>
-            <div v-else class="hero-viewer">
-              <div class="hero-stage">
-                <video v-if="activeMedia?.kind === 'video'" :src="activeMedia?.url" controls playsinline />
-                <img v-else :src="activeMedia?.url" alt="" loading="lazy" />
-              </div>
-
-              <div v-if="mediaItems.length > 1" class="hero-thumbs" role="tablist" aria-label="媒体缩略图">
-                <button
-                  v-for="m in mediaItems"
-                  :key="m.id"
-                  class="hero-thumb"
-                  :class="{ active: m.id === activeMediaId }"
-                  type="button"
-                  role="tab"
-                  :aria-selected="m.id === activeMediaId"
-                  @click="setActiveMedia(m)"
-                >
-                  <div class="hero-thumb-inner">
-                    <video v-if="m.kind === 'video'" :src="m.url" muted playsinline />
-                    <img v-else :src="m.url" alt="" loading="lazy" />
-                  </div>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div class="hero-meta">
-            <div class="intro" v-if="projectIntro">{{ projectIntro }}</div>
-            <div v-else class="muted">暂无简介</div>
-
-            <div v-if="tagsList.length" class="tags">
-              <el-tag v-for="t in tagsList" :key="t" class="tag" size="small" effect="plain">{{ t }}</el-tag>
+      <div class="hero-card">
+        <div class="hero-media">
+          <div v-if="mediaLoading" class="hero-empty">加载中…</div>
+          <div v-else-if="!mediaItems?.length" class="hero-empty">暂无预览</div>
+          <div v-else class="hero-viewer">
+            <div class="hero-stage">
+              <video v-if="activeMedia?.kind === 'video'" :src="activeMedia?.url" controls playsinline />
+              <img v-else :src="activeMedia?.url" :alt="projectName" loading="lazy" />
             </div>
 
-            <div v-if="projectLinks.length" class="links">
-              <div v-for="(link, i) in projectLinks" :key="i" class="link-item">
-                <a class="git" :href="link.url" target="_blank" rel="noreferrer">{{ link.name || link.url }}</a>
-                <span v-if="link.name" class="muted link-raw">{{ link.url }}</span>
-              </div>
+            <div v-if="mediaItems.length > 1" class="hero-thumbs" role="tablist" aria-label="媒体缩略图">
+              <button
+                v-for="m in mediaItems"
+                :key="m.id"
+                class="hero-thumb"
+                :class="{ active: m.id === activeMediaId }"
+                type="button"
+                role="tab"
+                :aria-selected="m.id === activeMediaId"
+                @click="setActiveMedia(m)"
+              >
+                <div class="hero-thumb-inner">
+                  <video v-if="m.kind === 'video'" :src="m.url" muted playsinline />
+                  <img v-else :src="m.url" alt="" loading="lazy" />
+                </div>
+              </button>
             </div>
           </div>
         </div>
 
-        <div class="section">
-          <div class="section-title">资源下载</div>
-          <div class="panel-body">
-            <div class="res-title">Zip</div>
-            <div v-if="zipFiles?.length" class="files">
-              <div v-for="f in zipFiles" :key="f" class="file zip-row">
-                <span class="zip-name" :title="f">{{ f }}</span>
-                <span class="zip-ops">
-                  <el-button size="small" :loading="zipBusy" @click="onDownloadZip(f)">下载</el-button>
-                </span>
-              </div>
-            </div>
-            <div v-else class="muted">（空）</div>
-          </div>
-        </div>
+        <div class="hero-meta">
+          <p v-if="projectIntro" class="intro">{{ projectIntro }}</p>
+          <p v-else class="intro empty-text">暂无简介</p>
 
-        <div class="section">
-          <div class="section-title">教程</div>
-          <div class="guide pre">{{ projectGuide || '-' }}</div>
+          <div v-if="projectLinks.length" class="links">
+            <a
+              v-for="(link, i) in projectLinks"
+              :key="i"
+              class="link-btn"
+              :href="link.url"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <span class="link-icon">↗</span>
+              {{ link.name || link.url }}
+            </a>
+          </div>
         </div>
       </div>
 
-      <aside class="side">
-        <div class="panel">
-          <div class="panel-title">信息</div>
-          <div class="kv">
-            <div class="k">公开</div>
-            <div class="v">{{ projectPublicText }}</div>
+      <div v-if="zipFiles?.length" class="section">
+        <h2 class="section-title">
+          <span class="section-icon">⬇</span>
+          资源下载
+        </h2>
+        <div class="files">
+          <div v-for="f in zipFiles" :key="f" class="file-row">
+            <span class="file-name" :title="f">{{ f }}</span>
+            <button class="download-btn" :disabled="zipBusy" @click="onDownloadZip(f)">下载</button>
           </div>
         </div>
-      </aside>
+      </div>
+
+      <div v-if="projectGuide" class="section">
+        <h2 class="section-title">
+          <span class="section-icon">📖</span>
+          教程
+        </h2>
+        <div class="guide">{{ projectGuide }}</div>
+      </div>
     </section>
 
     <el-empty v-else description="未找到项目" style="margin-top: 16px" />
@@ -462,152 +449,195 @@ const setActiveMedia = (m) => {
 
 <style scoped>
 .page {
-  max-width: 1440px;
+  max-width: 880px;
   margin: 0 auto;
-  padding: clamp(16px, 2.4vw, 28px);
+  padding: 28px 24px 64px;
 }
+
 .header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
+  margin-bottom: 28px;
 }
+
 .crumb {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  font-family: var(--portfolio-font-mono);
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.6);
-  margin-bottom: 6px;
+  color: var(--portfolio-text-muted);
+  margin-bottom: 10px;
 }
 .crumb-link {
   cursor: pointer;
   user-select: none;
+  transition: color 0.15s;
 }
 .crumb-link:hover {
-  color: rgba(64, 158, 255, 0.95);
+  color: var(--portfolio-accent);
 }
 .crumb-link:focus-visible {
-  outline: 2px solid rgba(64, 158, 255, 0.45);
+  outline: 2px solid var(--portfolio-accent);
   outline-offset: 2px;
-  border-radius: 6px;
+  border-radius: 4px;
 }
 .crumb-sep {
-  opacity: 0.6;
+  opacity: 0.5;
 }
 .crumb-current {
-  color: rgba(0, 0, 0, 0.75);
+  color: var(--portfolio-text-secondary);
 }
+
 .title {
-  font-size: 30px;
+  font-size: clamp(22px, 3.5vw, 28px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--portfolio-text);
   margin: 0;
-  letter-spacing: -0.2px;
+  line-height: 1.25;
 }
-.sub {
-  margin-top: 6px;
-  color: rgba(0, 0, 0, 0.6);
-  font-size: 12px;
+
+.header-tags {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
-.sep {
-  margin: 0 6px;
+.header-tag {
+  font-family: var(--portfolio-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--portfolio-accent-soft);
+  color: var(--portfolio-accent);
+  border: 1px solid rgba(37, 99, 235, 0.15);
 }
-.muted {
-  color: rgba(0, 0, 0, 0.6);
-}
+
 .actions {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
-  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+.back-btn {
+  padding: 7px 12px;
+  border: 1px solid var(--portfolio-border);
+  border-radius: var(--portfolio-radius);
+  background: var(--portfolio-surface);
+  color: var(--portfolio-text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.back-btn:hover {
+  border-color: var(--color-border-hover);
+  box-shadow: var(--portfolio-shadow-sm);
 }
 
 .layout {
-  margin-top: 14px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 16px;
-  align-items: start;
+  gap: 20px;
 }
-@media (max-width: 980px) {
-  .layout {
+
+.hero-card {
+  border: 1px solid var(--portfolio-border);
+  border-radius: var(--portfolio-radius-lg);
+  background: var(--portfolio-surface);
+  overflow: hidden;
+  box-shadow: var(--portfolio-shadow-sm);
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+}
+@media (max-width: 720px) {
+  .hero-card {
     grid-template-columns: 1fr;
   }
 }
-.content {
-  min-width: 0;
+
+.hero-media {
+  background: var(--portfolio-border-light);
+  border-right: 1px solid var(--portfolio-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
 }
-.side {
-  display: grid;
-  gap: 12px;
-}
-@media (max-width: 980px) {
-  .side {
-    position: static;
+@media (max-width: 720px) {
+  .hero-media {
+    border-right: none;
+    border-bottom: 1px solid var(--portfolio-border);
   }
 }
-.hero {
-  border: 1px solid var(--color-border);
-  border-radius: 16px;
-  background: #fff;
-  overflow: hidden;
-}
-.hero-media {
-  background: rgba(0, 0, 0, 0.03);
-}
+
 .hero-empty {
-  padding: 28px 16px;
+  padding: 48px 20px;
   text-align: center;
+  color: var(--portfolio-text-muted);
+  font-size: 13px;
+  width: 100%;
 }
+
 .hero-viewer {
+  width: 100%;
+  padding: 16px;
   display: grid;
   gap: 10px;
-  padding: 12px;
 }
+
 .hero-stage {
   width: 100%;
-  aspect-ratio: 16 / 9;
-  border-radius: 14px;
+  max-height: 280px;
+  border-radius: var(--portfolio-radius);
   overflow: hidden;
-  background: rgba(0, 0, 0, 0.05);
+  background: #0f172a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .hero-stage img,
 .hero-stage video {
-  width: 100%;
-  height: 100%;
+  max-width: 100%;
+  max-height: 280px;
+  width: auto;
+  height: auto;
   object-fit: contain;
   display: block;
-  background: #000;
 }
+
 .hero-thumbs {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   overflow-x: auto;
-  padding-bottom: 6px;
+  padding-bottom: 2px;
 }
 .hero-thumb {
-  width: 120px;
-  height: 72px;
+  width: 72px;
+  height: 48px;
   flex: 0 0 auto;
-  border: 1px solid rgba(0, 0, 0, 0.15);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.8);
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background: var(--portfolio-surface);
   padding: 0;
   cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.15s;
 }
 .hero-thumb.active {
-  border-color: rgba(64, 158, 255, 0.9);
-  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.25);
+  border-color: var(--portfolio-accent);
 }
 .hero-thumb:focus-visible {
-  outline: 2px solid rgba(64, 158, 255, 0.55);
+  outline: 2px solid var(--portfolio-accent);
   outline-offset: 2px;
 }
 .hero-thumb-inner {
   width: 100%;
   height: 100%;
-  border-radius: 10px;
   overflow: hidden;
-  background: rgba(0, 0, 0, 0.06);
+  background: var(--portfolio-border-light);
 }
 .hero-thumb-inner img,
 .hero-thumb-inner video {
@@ -616,26 +646,137 @@ const setActiveMedia = (m) => {
   object-fit: cover;
   display: block;
 }
+
 .hero-meta {
-  padding: 14px 16px 16px;
+  padding: 24px 24px 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
 }
 .intro {
-  color: rgba(0, 0, 0, 0.78);
-  line-height: 1.7;
+  color: var(--portfolio-text-secondary);
+  line-height: 1.75;
   font-size: 14px;
+  margin: 0;
 }
-.tags {
-  margin-top: 12px;
+.empty-text {
+  color: var(--portfolio-text-muted);
+  font-style: italic;
+}
+
+.links {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
-.tag {
-  max-width: 100%;
-}
-.link-item {
-  display: grid;
+.link-btn {
+  display: inline-flex;
+  align-items: center;
   gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid var(--portfolio-border);
+  border-radius: var(--portfolio-radius);
+  background: var(--portfolio-surface);
+  color: var(--portfolio-accent);
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+.link-btn:hover {
+  border-color: var(--portfolio-accent);
+  background: var(--portfolio-accent-soft);
+  box-shadow: var(--portfolio-shadow-sm);
+}
+.link-icon {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.section {
+  border: 1px solid var(--portfolio-border);
+  border-radius: var(--portfolio-radius-lg);
+  background: var(--portfolio-surface);
+  padding: 20px 24px;
+  box-shadow: var(--portfolio-shadow-sm);
+}
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--portfolio-text);
+  margin: 0 0 14px;
+  letter-spacing: -0.01em;
+}
+.section-icon {
+  font-size: 14px;
+  opacity: 0.7;
+}
+
+.guide {
+  line-height: 1.8;
+  font-size: 14px;
+  color: var(--portfolio-text-secondary);
+  white-space: pre-wrap;
+  font-family: var(--portfolio-font-mono);
+  font-size: 13px;
+  background: var(--portfolio-border-light);
+  padding: 16px;
+  border-radius: var(--portfolio-radius);
+  border: 1px solid var(--portfolio-border);
+}
+
+.files {
+  display: grid;
+  gap: 8px;
+}
+.file-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--portfolio-radius);
+  background: var(--portfolio-border-light);
+  border: 1px solid var(--portfolio-border);
+}
+.file-name {
+  font-family: var(--portfolio-font-mono);
+  font-size: 12px;
+  color: var(--portfolio-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.download-btn {
+  flex-shrink: 0;
+  padding: 5px 12px;
+  border: 1px solid var(--portfolio-accent);
+  border-radius: 6px;
+  background: var(--portfolio-accent-soft);
+  color: var(--portfolio-accent);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.download-btn:hover:not(:disabled) {
+  background: rgba(37, 99, 235, 0.15);
+}
+.download-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.muted {
+  color: var(--portfolio-text-muted);
+}
+
+.form {
+  max-width: 100%;
 }
 .link-editor {
   width: 100%;
@@ -648,108 +789,6 @@ const setActiveMedia = (m) => {
   gap: 8px;
   align-items: center;
 }
-.links {
-  margin-top: 12px;
-  display: grid;
-  gap: 6px;
-}
-.git {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(64, 158, 255, 0.35);
-  color: rgba(64, 158, 255, 0.95);
-  background: rgba(64, 158, 255, 0.06);
-  padding: 8px 10px;
-  border-radius: 12px;
-  text-decoration: none;
-  font-weight: 600;
-}
-.git:hover {
-  background: rgba(64, 158, 255, 0.09);
-}
-.link-raw {
-  font-size: 12px;
-  word-break: break-all;
-}
-
-.section {
-  margin-top: 12px;
-  border: 1px solid var(--color-border);
-  border-radius: 16px;
-  background: #fff;
-  padding: 14px 16px 16px;
-}
-.section-title {
-  font-weight: 800;
-  color: rgba(0, 0, 0, 0.82);
-  margin-bottom: 10px;
-}
-.guide {
-  line-height: 1.75;
-}
-
-.panel {
-  border: 1px solid var(--color-border);
-  border-radius: 16px;
-  background: #fff;
-  padding: 12px;
-}
-.panel-title {
-  font-weight: 800;
-  margin-bottom: 10px;
-  color: rgba(0, 0, 0, 0.82);
-}
-.panel-body {
-  min-width: 0;
-}
-.res-title {
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-.kv {
-  display: grid;
-  grid-template-columns: 86px minmax(0, 1fr);
-  gap: 8px 10px;
-  align-items: start;
-}
-.k {
-  color: rgba(0, 0, 0, 0.58);
-  font-size: 12px;
-  padding-top: 2px;
-}
-.v {
-  color: rgba(0, 0, 0, 0.82);
-  word-break: break-word;
-  font-size: 13px;
-}
-.pre {
-  white-space: pre-wrap;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-  font-size: 12px;
-  background: rgba(0, 0, 0, 0.03);
-  padding: 10px;
-  border-radius: 10px;
-}
-.path {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-  font-size: 12px;
-  color: rgba(0, 0, 0, 0.7);
-}
-.files {
-  display: grid;
-  gap: 6px;
-}
-.file {
-  padding: 6px 8px;
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.04);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-  font-size: 12px;
-}
-.form {
-  max-width: 100%;
-}
 
 .media-actions {
   display: flex;
@@ -757,32 +796,29 @@ const setActiveMedia = (m) => {
   align-items: center;
   flex-wrap: wrap;
 }
-
 .media-strip {
   margin-top: 10px;
   display: flex;
   gap: 12px;
   overflow-x: auto;
   padding-bottom: 6px;
+  max-width: 100%;
 }
-
 .media-card {
   width: 220px;
   flex: 0 0 auto;
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  background: #fff;
+  border: 1px solid var(--portfolio-border);
+  border-radius: var(--portfolio-radius);
+  background: var(--portfolio-surface);
   overflow: hidden;
 }
-
 .thumb {
   height: 140px;
-  background: rgba(0, 0, 0, 0.03);
+  background: var(--portfolio-border-light);
   display: flex;
   align-items: center;
   justify-content: center;
 }
-
 .thumb img,
 .thumb video {
   width: 100%;
@@ -790,49 +826,72 @@ const setActiveMedia = (m) => {
   object-fit: cover;
   display: block;
 }
-
 .media-meta {
   padding: 10px;
 }
-
 .media-name {
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.7);
+  color: var(--portfolio-text-muted);
   word-break: break-all;
   margin-bottom: 8px;
 }
-
 .media-ops {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
 }
 
+.panel {
+  border: 1px solid var(--portfolio-border);
+  border-radius: var(--portfolio-radius);
+  background: var(--portfolio-surface);
+  padding: 12px;
+}
+.panel-title {
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: var(--portfolio-text);
+  font-size: 13px;
+}
+.panel-body {
+  min-width: 0;
+}
 .zip-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
 }
-
 .zip-name {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-family: var(--portfolio-font-mono);
+  font-size: 12px;
 }
-
 .zip-ops {
   display: flex;
   gap: 8px;
   flex: 0 0 auto;
+}
+.file {
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: var(--portfolio-border-light);
+  font-family: var(--portfolio-font-mono);
+  font-size: 12px;
+}
+.files {
+  display: grid;
+  gap: 6px;
 }
 
 .drawer-head {
   position: sticky;
   top: 0;
   z-index: 1;
-  background: #fff;
-  border-bottom: 1px solid var(--color-border);
+  background: var(--portfolio-surface);
+  border-bottom: 1px solid var(--portfolio-border);
   padding: 12px 12px 10px;
   display: flex;
   align-items: center;
@@ -840,8 +899,8 @@ const setActiveMedia = (m) => {
   gap: 12px;
 }
 .drawer-title {
-  font-weight: 900;
-  color: rgba(0, 0, 0, 0.82);
+  font-weight: 700;
+  color: var(--portfolio-text);
 }
 .drawer-actions {
   display: flex;
@@ -852,9 +911,15 @@ const setActiveMedia = (m) => {
   padding: 12px;
   display: grid;
   gap: 12px;
+  min-width: 0;
 }
 .admin-panel {
   padding: 12px;
+  min-width: 0;
+  overflow: hidden;
+}
+:deep(.admin-drawer .el-drawer__body) {
+  overflow-x: hidden;
 }
 </style>
 
