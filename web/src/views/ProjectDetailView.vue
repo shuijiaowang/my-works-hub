@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { adminLoggedIn } from '@/adminAuth'
 import { deleteProjectMedia, deleteProjectZip, downloadProjectZip, fetchAdminProjectMedia, fetchProjectDetail, fetchProjectMedia, moveProjectMedia, updateProject, uploadProjectMedia, uploadProjectZip } from '@/api/projects'
 
 const route = useRoute()
@@ -223,7 +224,7 @@ const removeLink = (index) => {
 }
 
 onMounted(() => {
-  canEdit.value = !!localStorage.getItem('admin_token')
+  canEdit.value = adminLoggedIn.value && !!localStorage.getItem('admin_token')
   load()
 })
 

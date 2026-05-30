@@ -25,9 +25,11 @@ const login = async () => {
   saving.value = true
   status.value = ''
   try {
-    const res = await service.post(`/admin/login?token=${encodeURIComponent(token.value)}`, {
-      password: password.value,
-    })
+    const res = await service.post(
+      '/admin/login',
+      { password: password.value },
+      { headers: { 'X-Admin-Token': token.value } },
+    )
     status.value = res?.msg || '登录成功'
     saveToken()
     setAdminLoggedIn(true)

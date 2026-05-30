@@ -7,9 +7,9 @@ mysql:
   path: 127.0.0.1
 
 admin:
-  # 管理端固定 token（永远只有一个）。你第一次访问会走 /admin/login?token=xxx
-  # 后续管理端请求也都应携带该 token（建议走 Header: X-Admin-Token）。
-  token: "charset=utf8mb4&parseTime=True&loc=Local"
+  # 管理端固定 token（勿含 & = ? 等 URL 特殊字符；勿与 mysql.config 混用）
+  # 首次在 /admin 页填写，或 /admin?token=你的token（token 需 URL 编码）
+  token: "workhub-admin-token-change-me-111my-works-hub-187"
   # 管理端登录密码（用于 /admin/login 的密码校验）
   password: "my-works-hub-187"
 

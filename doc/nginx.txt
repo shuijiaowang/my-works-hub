@@ -1,0 +1,86 @@
+server
+{
+    listen 80;
+    server_name works.lyyxy.top;
+    index index.html;
+
+    # 站点根目录 = 服务器上 index.html 所在目录（与本地是否叫 dist 无关）
+    # 你把 npm run build 的产物直接放在 web/ 下时，用下面这一行：
+    root /www/wwwroot/my_works_hub/web;
+    # 若以后改为只上传 dist 里的内容到 web/dist/，再改成：
+    # root /www/wwwroot/my_works_hub/web/dist;
+
+    #CERT-APPLY-CHECK--START
+    include /www/server/panel/vhost/nginx/well-known/works.lyyxy.top.conf;
+    #CERT-APPLY-CHECK--END
+    include /www/server/panel/vhost/nginx/extension/works.lyyxy.top/*.conf;
+
+    #SSL-START
+    #error_page 404/404.html;
+    #SSL-END
+
+    #ERROR-PAGE-START
+    # SPA 不要用宝塔默认 404 页：index 找不到时会再去找 /404.html，容易变成 500
+    # error_page 404 /404.html;
+    #ERROR-PAGE-END
+
+    # 本项目为 Node + Vue，不需要 PHP（注释掉下面一行）
+    # include enable-php-00.conf;
+
+    # 若伪静态文件里有 PHP 规则，建议注释掉，避免覆盖 SPA
+    # include /www/server/panel/vhost/rewrite/works.lyyxy.top.conf;
+
+    client_max_body_size 50m;
+
+    location ~* (\.user.ini|\.htaccess|\.htpasswd|\.env.*|\.project|\.bashrc|\.bash_profile|\.bash_logout|\.DS_Store|\.gitignore|\.gitattributes|LICENSE|README\.md|CLAUDE\.md|CHANGELOG\.md|CHANGELOG|CONTRIBUTING\.md|TODO\.md|FAQ\.md|composer\.json|composer\.lock|package(-lock)?\.json|yarn\.lock|pnpm-lock\.yaml|\.\w+~|\.swp|\.swo|\.bak(up)?|\.old|\.tmp|\.temp|\.log|\.sql(\.gz)?|docker-compose\.yml|docker\.env|Dockerfile|\.csproj|\.sln|Cargo\.toml|Cargo\.lock|go\.mod|go\.sum|phpunit\.xml|phpunit\.xml|pom\.xml|build\.gradl|pyproject\.toml|requirements\.txt|application(-\w+)?\.(ya?ml|properties))$
+    {
+        return 404;
+    }
+
+    location ~* /(\.git|\.svn|\.bzr|\.vscode|\.claude|\.idea|\.ssh|\.github|\.npm|\.yarn|\.pnpm|\.cache|\.husky|\.turbo|\.next|\.nuxt|node_modules|runtime|src)/ {
+        return 404;
+    }
+
+    location ~ \.well-known {
+        allow all;
+    }
+
+    if ( $uri ~ "^/\.well-known/.*\.(php|jsp|py|js|css|lua|ts|go|zip|tar\.gz|rar|7z|sql|bak)$" ) {
+        return 403;
+    }
+
+    # 后端 API（含 /api/resources/... 上传的媒体，必须由 Go 提供）
+    # 必须用 ^~：否则下方「按扩展名缓存」的正则会抢走 *.png 等请求，在 web 根目录 try_files 导致 404
+    location ^~ /api/ {
+        proxy_pass http://127.0.0.1:9002;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 300s;
+        proxy_read_timeout 300s;
+    }
+
+    # 前端静态图片缓存（/api/ 已由上方 ^~ 优先走代理，不会进这里）
+    location ~* \.(gif|jpg|jpeg|png|bmp|swf|ico|webp|svg)$ {
+        expires 30d;
+        access_log off;
+        try_files $uri =404;
+    }
+
+    location ~* \.(js|css|woff2?|ttf|eot)$ {
+        expires 12h;
+        access_log off;
+        try_files $uri =404;
+    }
+
+    # Vue Router history：刷新子路径回落到 index.html
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    access_log  /www/wwwlogs/works.lyyxy.top.log;
+    error_log   /www/wwwlogs/works.lyyxy.top.error.log;
+}

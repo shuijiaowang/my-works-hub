@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { fetchAllProjects } from '@/api/projects'
+import defaultCoverImg from '@/assets/未上传.png'
 
 const router = useRouter()
 
@@ -11,7 +12,7 @@ const data = ref(null)
 
 const projects = computed(() => data.value?.data?.projects || [])
 
-const DEFAULT_COVER = '/api/resources/未上传.png'
+const DEFAULT_COVER = defaultCoverImg
 
 const getCover = (it) => {
   return it?.coverUrl || DEFAULT_COVER

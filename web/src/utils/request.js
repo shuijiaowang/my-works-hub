@@ -88,9 +88,16 @@ service.interceptors.response.use(
             return Promise.reject(error)
         }
 
-        // 401 未授权处理
+        // 401 未授权处理（仅管理端接口提示；公开接口不应出现 401）
         if (error.response.status === 401) {
-            ElMessage.error('管理端校验失败（401）')
+            const url = String(error.config?.url || '')
+            if (url.includes('/admin/')) {
+                localStorage.removeItem('admin_token')
+                sessionStorage.removeItem('admin_logged_in')
+                ElMessage.error('管理端 token 或密码错误，已清除本地 token，请重新登录')
+            } else {
+                ElMessage.error(error.response.data?.msg || '未授权（401）')
+            }
         } else {
             // 其他HTTP错误
             const status = error.response.status
