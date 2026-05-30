@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue'
+import { adminLoggedIn } from '@/adminAuth'
 import AdminLoginCard from '@/components/admin/AdminLoginCard.vue'
 import CreateProjectDialog from '@/components/admin/CreateProjectDialog.vue'
 
@@ -9,11 +10,9 @@ const lastCreated = ref(null)
 
 <template>
   <main class="page">
-    <h1 class="title">管理端</h1>
+    <AdminLoginCard />
 
-    <AdminLoginCard @logged-in="() => {}" />
-
-    <section class="toolbar">
+    <section v-if="adminLoggedIn" class="toolbar">
       <el-button type="primary" @click="createOpen = true">新建项目</el-button>
       <span v-if="lastCreated" class="hint">最近创建：{{ lastCreated?.Name || lastCreated?.name }}</span>
     </section>
@@ -27,10 +26,6 @@ const lastCreated = ref(null)
   max-width: 960px;
   margin: 0 auto;
   padding: 24px;
-}
-.title {
-  font-size: 28px;
-  margin: 0 0 8px;
 }
 .toolbar {
   margin-top: 16px;

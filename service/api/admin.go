@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -66,23 +67,23 @@ func (a *AdminApi) Ping(c *gin.Context) {
 }
 
 type AdminCreateProjectRequest struct {
-	Name        string     `json:"name"`
-	FolderName  string     `json:"folderName"`
-	IsPublic    *bool      `json:"isPublic"`
-	Intro       string     `json:"intro"`
-	CodeStartAt *time.Time `json:"codeStartAt"`
-	GitRepo     string     `json:"gitRepo"`
-	Guide       string     `json:"guide"`
-	Tags        string     `json:"tags"`
+	Name        string              `json:"name"`
+	FolderName  string              `json:"folderName"`
+	IsPublic    *bool               `json:"isPublic"`
+	Intro       string              `json:"intro"`
+	CodeStartAt *time.Time          `json:"codeStartAt"`
+	Links       []model.ProjectLink `json:"links"`
+	Guide       string              `json:"guide"`
+	Tags        string              `json:"tags"`
 }
 
 type AdminUpdateProjectRequest struct {
-	Name     *string `json:"name"`
-	IsPublic *bool   `json:"isPublic"`
-	Intro    *string `json:"intro"`
-	GitRepo  *string `json:"gitRepo"`
-	Guide    *string `json:"guide"`
-	Tags     *string `json:"tags"`
+	Name     *string              `json:"name"`
+	IsPublic *bool                `json:"isPublic"`
+	Intro    *string              `json:"intro"`
+	Links    *[]model.ProjectLink `json:"links"`
+	Guide    *string              `json:"guide"`
+	Tags     *string              `json:"tags"`
 }
 
 func (a *AdminApi) CreateProject(c *gin.Context) {
@@ -122,7 +123,7 @@ func (a *AdminApi) CreateProject(c *gin.Context) {
 		IsPublic:    isPublic,
 		Intro:       strings.TrimSpace(req.Intro),
 		CodeStartAt: codeStartAt,
-		GitRepo:     strings.TrimSpace(req.GitRepo),
+		Links:       normalizeProjectLinks(req.Links),
 		Guide:       req.Guide,
 		Tags:        strings.TrimSpace(req.Tags),
 	}
@@ -177,8 +178,13 @@ func (a *AdminApi) UpdateProject(c *gin.Context) {
 	if req.Intro != nil {
 		updates["intro"] = strings.TrimSpace(*req.Intro)
 	}
-	if req.GitRepo != nil {
-		updates["git_repo"] = strings.TrimSpace(*req.GitRepo)
+	if req.Links != nil {
+		linksJSON, err := marshalProjectLinks(*req.Links)
+		if err != nil {
+			response.FailWithMessage(err.Error(), c)
+			return
+		}
+		updates["links"] = linksJSON
 	}
 	if req.Guide != nil {
 		updates["guide"] = *req.Guide
@@ -203,6 +209,31 @@ func (a *AdminApi) UpdateProject(c *gin.Context) {
 	}
 
 	response.OkWithDetailed(proj, "更新成功", c)
+}
+
+func marshalProjectLinks(links []model.ProjectLink) (string, error) {
+	normalized := normalizeProjectLinks(links)
+	if normalized == nil {
+		normalized = []model.ProjectLink{}
+	}
+	b, err := json.Marshal(normalized)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
+}
+
+func normalizeProjectLinks(links []model.ProjectLink) []model.ProjectLink {
+	out := make([]model.ProjectLink, 0, len(links))
+	for _, l := range links {
+		name := strings.TrimSpace(l.Name)
+		url := strings.TrimSpace(l.URL)
+		if name == "" && url == "" {
+			continue
+		}
+		out = append(out, model.ProjectLink{Name: name, URL: url})
+	}
+	return out
 }
 
 var nonWord = regexp.MustCompile(`[^a-zA-Z0-9_-]+`)

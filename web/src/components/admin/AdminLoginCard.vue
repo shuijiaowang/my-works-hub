@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue'
+import { setAdminLoggedIn } from '@/adminAuth'
 import service from '@/utils/request'
 
 const emit = defineEmits(['logged-in'])
@@ -29,6 +30,7 @@ const login = async () => {
     })
     status.value = res?.msg || '登录成功'
     saveToken()
+    setAdminLoggedIn(true)
     emit('logged-in')
   } catch (e) {
     status.value = e?.msg || e?.message || '登录失败'
@@ -37,12 +39,6 @@ const login = async () => {
   }
 }
 
-const ping = async () => {
-  if (!token.value) return
-  saveToken()
-  const res = await service.get('/admin/ping')
-  status.value = res?.msg || JSON.stringify(res)
-}
 </script>
 
 <template>
@@ -59,7 +55,6 @@ const ping = async () => {
       </el-form-item>
       <el-form-item>
         <el-button type="primary" :disabled="!hasToken" :loading="saving" @click="login">登录</el-button>
-        <el-button :disabled="!hasToken" @click="ping">Ping</el-button>
       </el-form-item>
     </el-form>
 

@@ -21,7 +21,7 @@ const canEdit = ref(false)
 const form = ref({
   name: '',
   intro: '',
-  gitRepo: '',
+  links: [],
   guide: '',
   tags: '',
   isPublic: true,
@@ -33,7 +33,16 @@ const id = computed(() => route.params.id)
 
 const projectName = computed(() => project.value?.Name ?? project.value?.name ?? '')
 const projectIntro = computed(() => project.value?.Intro ?? project.value?.intro ?? '')
-const projectGitRepo = computed(() => project.value?.GitRepo ?? project.value?.gitRepo ?? '')
+const normalizeLinks = (raw) => {
+  const list = raw?.Links ?? raw?.links ?? []
+  if (!Array.isArray(list)) return []
+  return list.map((l) => ({
+    name: l?.Name ?? l?.name ?? '',
+    url: l?.URL ?? l?.url ?? '',
+  }))
+}
+
+const projectLinks = computed(() => normalizeLinks(project.value))
 const projectGuide = computed(() => project.value?.Guide ?? project.value?.guide ?? '')
 const projectPublicText = computed(() => String(project.value?.IsPublic ?? project.value?.isPublic ?? ''))
 const tagsList = computed(() => {
@@ -59,7 +68,7 @@ const fillFormFromProject = () => {
   form.value = {
     name: p.Name ?? p.name ?? '',
     intro: p.Intro ?? p.intro ?? '',
-    gitRepo: p.GitRepo ?? p.gitRepo ?? '',
+    links: normalizeLinks(p),
     guide: p.Guide ?? p.guide ?? '',
     tags: p.Tags ?? p.tags ?? '',
     isPublic: Boolean(p.IsPublic ?? p.isPublic ?? true),
@@ -118,7 +127,7 @@ const onSave = async () => {
     await updateProject(id.value, {
       name: form.value.name,
       intro: form.value.intro,
-      gitRepo: form.value.gitRepo,
+      links: form.value.links,
       guide: form.value.guide,
       tags: form.value.tags,
       isPublic: form.value.isPublic,
@@ -204,6 +213,14 @@ const onDownloadZip = async (fileName) => {
   } finally {
     zipBusy.value = false
   }
+}
+
+const addLink = () => {
+  form.value.links.push({ name: '', url: '' })
+}
+
+const removeLink = (index) => {
+  form.value.links.splice(index, 1)
 }
 
 onMounted(() => {
@@ -294,9 +311,11 @@ const setActiveMedia = (m) => {
               <el-tag v-for="t in tagsList" :key="t" class="tag" size="small" effect="plain">{{ t }}</el-tag>
             </div>
 
-            <div v-if="projectGitRepo" class="links">
-              <a class="git" :href="projectGitRepo" target="_blank" rel="noreferrer">打开 Git 仓库</a>
-              <span class="muted link-raw">{{ projectGitRepo }}</span>
+            <div v-if="projectLinks.length" class="links">
+              <div v-for="(link, i) in projectLinks" :key="i" class="link-item">
+                <a class="git" :href="link.url" target="_blank" rel="noreferrer">{{ link.name || link.url }}</a>
+                <span v-if="link.name" class="muted link-raw">{{ link.url }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -361,8 +380,15 @@ const setActiveMedia = (m) => {
           <el-form-item label="简介">
             <el-input v-model="form.intro" type="textarea" :rows="3" placeholder="简介" />
           </el-form-item>
-          <el-form-item label="Git">
-            <el-input v-model="form.gitRepo" placeholder="Git Repo URL" />
+          <el-form-item label="链接">
+            <div class="link-editor">
+              <div v-for="(link, i) in form.links" :key="i" class="link-row">
+                <el-input v-model="link.name" placeholder="名称，如 GitHub" />
+                <el-input v-model="link.url" placeholder="链接 URL" />
+                <el-button @click="removeLink(i)">删除</el-button>
+              </div>
+              <el-button type="primary" plain @click="addLink">添加链接</el-button>
+            </div>
           </el-form-item>
           <el-form-item label="标签">
             <el-input v-model="form.tags" placeholder="逗号分隔" />
@@ -606,6 +632,21 @@ const setActiveMedia = (m) => {
 }
 .tag {
   max-width: 100%;
+}
+.link-item {
+  display: grid;
+  gap: 6px;
+}
+.link-editor {
+  width: 100%;
+  display: grid;
+  gap: 8px;
+}
+.link-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) auto;
+  gap: 8px;
+  align-items: center;
 }
 .links {
   margin-top: 12px;

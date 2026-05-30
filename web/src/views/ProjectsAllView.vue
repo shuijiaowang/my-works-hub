@@ -49,14 +49,11 @@ onMounted(load)
 <template>
   <main class="page">
     <div class="header">
-      <h1 class="title">我的作品</h1>
+      <h1 class="title">作者：睡觉王</h1>
       <div class="actions">
         <el-button type="primary" :loading="loading" @click="load">刷新</el-button>
       </div>
     </div>
-
-    <p class="desc">卡片式展示作品：封面、项目名、简介、标签。</p>
-
     <el-alert v-if="errMsg" type="error" :title="errMsg" show-icon :closable="false" />
 
     <el-empty v-if="!loading && !projects.length && !errMsg" description="暂无数据" />
