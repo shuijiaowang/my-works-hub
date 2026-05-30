@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 	"workhub/config"
@@ -145,20 +144,13 @@ func (a *AdminApi) CreateProject(c *gin.Context) {
 }
 
 func (a *AdminApi) UpdateProject(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil || id <= 0 {
-		response.FailWithMessage("invalid project id", c)
+	proj, ok := loadProjectByFolderName(c)
+	if !ok {
 		return
 	}
 
 	var req AdminUpdateProjectRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.FailWithMessage(err.Error(), c)
-		return
-	}
-
-	var proj model.Project
-	if err := db.DB.First(&proj, id).Error; err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
@@ -203,7 +195,7 @@ func (a *AdminApi) UpdateProject(c *gin.Context) {
 		return
 	}
 
-	if err := db.DB.First(&proj, id).Error; err != nil {
+	if err := db.DB.First(&proj, proj.ID).Error; err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
@@ -256,15 +248,8 @@ type AdminMediaItem struct {
 }
 
 func (a *AdminApi) ListProjectMedia(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil || id <= 0 {
-		response.FailWithMessage("invalid project id", c)
-		return
-	}
-
-	var proj model.Project
-	if err := db.DB.First(&proj, id).Error; err != nil {
-		response.FailWithMessage(err.Error(), c)
+	proj, ok := loadProjectByFolderName(c)
+	if !ok {
 		return
 	}
 
@@ -294,15 +279,8 @@ func (a *AdminApi) ListProjectMedia(c *gin.Context) {
 }
 
 func (a *AdminApi) UploadProjectMedia(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil || id <= 0 {
-		response.FailWithMessage("invalid project id", c)
-		return
-	}
-
-	var proj model.Project
-	if err := db.DB.First(&proj, id).Error; err != nil {
-		response.FailWithMessage(err.Error(), c)
+	proj, ok := loadProjectByFolderName(c)
+	if !ok {
 		return
 	}
 
@@ -366,20 +344,13 @@ func (a *AdminApi) UploadProjectMedia(c *gin.Context) {
 }
 
 func (a *AdminApi) DeleteProjectMedia(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil || id <= 0 {
-		response.FailWithMessage("invalid project id", c)
+	proj, ok := loadProjectByFolderName(c)
+	if !ok {
 		return
 	}
 	mediaId := strings.TrimSpace(c.Param("mediaId"))
 	if mediaId == "" {
 		response.FailWithMessage("invalid media id", c)
-		return
-	}
-
-	var proj model.Project
-	if err := db.DB.First(&proj, id).Error; err != nil {
-		response.FailWithMessage(err.Error(), c)
 		return
 	}
 
@@ -419,9 +390,8 @@ type AdminMoveMediaRequest struct {
 }
 
 func (a *AdminApi) MoveProjectMedia(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil || id <= 0 {
-		response.FailWithMessage("invalid project id", c)
+	proj, ok := loadProjectByFolderName(c)
+	if !ok {
 		return
 	}
 	mediaId := strings.TrimSpace(c.Param("mediaId"))
@@ -438,12 +408,6 @@ func (a *AdminApi) MoveProjectMedia(c *gin.Context) {
 	dir := strings.ToLower(strings.TrimSpace(req.Direction))
 	if dir != "left" && dir != "right" {
 		response.FailWithMessage("direction must be left|right", c)
-		return
-	}
-
-	var proj model.Project
-	if err := db.DB.First(&proj, id).Error; err != nil {
-		response.FailWithMessage(err.Error(), c)
 		return
 	}
 
@@ -531,15 +495,8 @@ func sanitizeZipUploadName(original string) (string, error) {
 // UploadProjectZip uploads (or overwrites) a zip package under:
 // ./resources/<folderName>/zip/<originalName>.zip
 func (a *AdminApi) UploadProjectZip(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil || id <= 0 {
-		response.FailWithMessage("invalid project id", c)
-		return
-	}
-
-	var proj model.Project
-	if err := db.DB.First(&proj, id).Error; err != nil {
-		response.FailWithMessage(err.Error(), c)
+	proj, ok := loadProjectByFolderName(c)
+	if !ok {
 		return
 	}
 
@@ -571,25 +528,18 @@ func (a *AdminApi) UploadProjectZip(c *gin.Context) {
 	response.OkWithData(gin.H{
 		"fileName":     saveName,
 		"originalName": fh.Filename,
-		"url":          filepath.ToSlash(filepath.Join("/api/admin/projects", strconv.Itoa(id), "zip", saveName)),
+		"url":          filepath.ToSlash(filepath.Join("/api/admin/projects", proj.FolderName, "zip", saveName)),
 	}, c)
 }
 
 func (a *AdminApi) DownloadProjectZip(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil || id <= 0 {
-		response.FailWithMessage("invalid project id", c)
+	proj, ok := loadProjectByFolderName(c)
+	if !ok {
 		return
 	}
 
 	fileName, err := sanitizeZipUploadName(c.Param("fileName"))
 	if err != nil {
-		response.FailWithMessage(err.Error(), c)
-		return
-	}
-
-	var proj model.Project
-	if err := db.DB.First(&proj, id).Error; err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
@@ -609,20 +559,13 @@ func (a *AdminApi) DownloadProjectZip(c *gin.Context) {
 }
 
 func (a *AdminApi) DeleteProjectZip(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil || id <= 0 {
-		response.FailWithMessage("invalid project id", c)
+	proj, ok := loadProjectByFolderName(c)
+	if !ok {
 		return
 	}
 
 	fileName, err := sanitizeZipUploadName(c.Param("fileName"))
 	if err != nil {
-		response.FailWithMessage(err.Error(), c)
-		return
-	}
-
-	var proj model.Project
-	if err := db.DB.First(&proj, id).Error; err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}

@@ -29,7 +29,7 @@ const form = ref({
 
 const item = computed(() => data.value?.data?.project || null)
 const project = computed(() => item.value?.project || null)
-const id = computed(() => route.params.id)
+const folderName = computed(() => route.params.folderName)
 
 const projectName = computed(() => project.value?.Name ?? project.value?.name ?? '')
 const projectIntro = computed(() => project.value?.Intro ?? project.value?.intro ?? '')
@@ -76,10 +76,10 @@ const fillFormFromProject = () => {
 }
 
 const loadMedia = async () => {
-  if (!id.value) return
+  if (!folderName.value) return
   mediaLoading.value = true
   try {
-    const res = canEdit.value ? await fetchAdminProjectMedia(id.value) : await fetchProjectMedia(id.value)
+    const res = canEdit.value ? await fetchAdminProjectMedia(folderName.value) : await fetchProjectMedia(folderName.value)
     mediaItems.value = res?.data?.items || []
 
     const items = mediaItems.value || []
@@ -102,7 +102,7 @@ const load = async () => {
   loading.value = true
   errMsg.value = ''
   try {
-    data.value = await fetchProjectDetail(id.value)
+    data.value = await fetchProjectDetail(folderName.value)
     fillFormFromProject()
     await loadMedia()
   } catch (e) {
@@ -124,7 +124,7 @@ const onSave = async () => {
   saving.value = true
   errMsg.value = ''
   try {
-    await updateProject(id.value, {
+    await updateProject(folderName.value, {
       name: form.value.name,
       intro: form.value.intro,
       links: form.value.links,
@@ -145,7 +145,7 @@ const onUpload = async (opt) => {
   const file = opt?.file
   if (!file) return
   try {
-    await uploadProjectMedia(id.value, file)
+    await uploadProjectMedia(folderName.value, file)
     ElMessage.success('上传成功')
     await loadMedia()
     opt?.onSuccess?.()
@@ -156,7 +156,7 @@ const onUpload = async (opt) => {
 
 const onDeleteMedia = async (mid) => {
   try {
-    await deleteProjectMedia(id.value, mid)
+    await deleteProjectMedia(folderName.value, mid)
     ElMessage.success('删除成功')
     await loadMedia()
   } catch (e) {
@@ -166,7 +166,7 @@ const onDeleteMedia = async (mid) => {
 
 const onMove = async (mid, dir) => {
   try {
-    await moveProjectMedia(id.value, mid, dir)
+    await moveProjectMedia(folderName.value, mid, dir)
     await loadMedia()
   } catch (e) {}
 }
@@ -176,7 +176,7 @@ const onUploadZip = async (opt) => {
   if (!file) return
   zipBusy.value = true
   try {
-    await uploadProjectZip(id.value, file)
+    await uploadProjectZip(folderName.value, file)
     ElMessage.success('上传成功（同名会覆盖更新）')
     await load()
     opt?.onSuccess?.()
@@ -190,7 +190,7 @@ const onUploadZip = async (opt) => {
 const onDeleteZip = async (fileName) => {
   zipBusy.value = true
   try {
-    await deleteProjectZip(id.value, fileName)
+    await deleteProjectZip(folderName.value, fileName)
     ElMessage.success('删除成功')
     await load()
   } finally {
@@ -201,7 +201,7 @@ const onDeleteZip = async (fileName) => {
 const onDownloadZip = async (fileName) => {
   zipBusy.value = true
   try {
-    const blob = await downloadProjectZip(id.value, fileName)
+    const blob = await downloadProjectZip(folderName.value, fileName)
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url

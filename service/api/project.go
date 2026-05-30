@@ -3,7 +3,7 @@ package api
 import (
 	"net/http"
 	"path/filepath"
-	"strconv"
+	"strings"
 	"workhub/db"
 	"workhub/model"
 	"workhub/util"
@@ -11,6 +11,20 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
+
+func loadProjectByFolderName(c *gin.Context) (model.Project, bool) {
+	folderName := strings.TrimSpace(c.Param("folderName"))
+	if folderName == "" {
+		response.FailWithMessage("invalid project folder name", c)
+		return model.Project{}, false
+	}
+	var proj model.Project
+	if err := db.DB.Where("folder_name = ?", folderName).First(&proj).Error; err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return model.Project{}, false
+	}
+	return proj, true
+}
 
 type ProjectApi struct{}
 
@@ -80,18 +94,11 @@ func (p *ProjectApi) All(c *gin.Context) {
 	}, c)
 }
 
-// Detail returns ONE project by id.
+// Detail returns ONE project by folder name.
 // It does not require auth.
 func (p *ProjectApi) Detail(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil || id <= 0 {
-		response.FailWithMessage("invalid project id", c)
-		return
-	}
-
-	var proj model.Project
-	if err := db.DB.First(&proj, id).Error; err != nil {
-		response.FailWithMessage(err.Error(), c)
+	proj, ok := loadProjectByFolderName(c)
+	if !ok {
 		return
 	}
 
@@ -147,15 +154,8 @@ type ProjectMediaItem struct {
 // MediaList returns ordered media items for preview.
 // It does not require auth.
 func (p *ProjectApi) MediaList(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil || id <= 0 {
-		response.FailWithMessage("invalid project id", c)
-		return
-	}
-
-	var proj model.Project
-	if err := db.DB.First(&proj, id).Error; err != nil {
-		response.FailWithMessage(err.Error(), c)
+	proj, ok := loadProjectByFolderName(c)
+	if !ok {
 		return
 	}
 

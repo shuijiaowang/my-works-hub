@@ -10,7 +10,7 @@ const router = createRouter({
   routes: [
     { path: '/', redirect: '/projects' },
     { path: '/projects', name: 'projects', component: ProjectsAllView, meta: { title: '我的作品' } },
-    { path: '/projects/:id', name: 'project-detail', component: ProjectDetailView, meta: { title: '项目详情' } },
+    { path: '/projects/:folderName', name: 'project-detail', component: ProjectDetailView, meta: { title: '项目详情' } },
     { path: '/admin', name: 'admin', component: AdminView, meta: { title: '管理' } },
   ],
 })

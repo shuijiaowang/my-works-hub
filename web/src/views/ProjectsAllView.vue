@@ -17,7 +17,7 @@ const getCover = (it) => {
   return it?.coverUrl || DEFAULT_COVER
 }
 
-const getId = (it) => it?.project?.ID ?? it?.project?.id
+const getFolderName = (it) => it?.project?.FolderName ?? it?.project?.folderName ?? ''
 
 const getName = (it) => it?.project?.Name ?? it?.project?.name ?? ''
 
@@ -61,12 +61,12 @@ onMounted(load)
     <section v-else class="cards">
       <div
         v-for="it in projects"
-        :key="getId(it)"
+        :key="getFolderName(it)"
         class="card"
         role="button"
         tabindex="0"
-        @click="router.push(`/projects/${getId(it)}`)"
-        @keydown.enter.prevent="router.push(`/projects/${getId(it)}`)"
+        @click="router.push(`/projects/${getFolderName(it)}`)"
+        @keydown.enter.prevent="router.push(`/projects/${getFolderName(it)}`)"
       >
         <div class="cover">
           <img :src="getCover(it)" alt="" />

@@ -22,8 +22,8 @@ func SetupRouter() *gin.Engine {
 		public.GET("/health", func(c *gin.Context) { c.JSON(200, gin.H{"ok": true}) })
 		public.POST("/example/test", apiGroup.Test)
 		public.GET("/projects/all", apiGroup.ProjectApi.All)
-		public.GET("/projects/:id", apiGroup.ProjectApi.Detail)
-		public.GET("/projects/:id/media", apiGroup.ProjectApi.MediaList)
+		public.GET("/projects/:folderName", apiGroup.ProjectApi.Detail)
+		public.GET("/projects/:folderName/media", apiGroup.ProjectApi.MediaList)
 	}
 
 	admin := r.Group("/api/admin")
@@ -32,16 +32,16 @@ func SetupRouter() *gin.Engine {
 		admin.Use(middleware.AdminAuth())
 		admin.GET("/ping", apiGroup.AdminApi.Ping)
 		admin.POST("/projects", apiGroup.AdminApi.CreateProject)
-		admin.PUT("/projects/:id", apiGroup.AdminApi.UpdateProject)
-		admin.GET("/projects/:id/media", apiGroup.AdminApi.ListProjectMedia)
-		admin.POST("/projects/:id/media", apiGroup.AdminApi.UploadProjectMedia)
-		admin.DELETE("/projects/:id/media/:mediaId", apiGroup.AdminApi.DeleteProjectMedia)
-		admin.POST("/projects/:id/media/:mediaId/move", apiGroup.AdminApi.MoveProjectMedia)
+		admin.PUT("/projects/:folderName", apiGroup.AdminApi.UpdateProject)
+		admin.GET("/projects/:folderName/media", apiGroup.AdminApi.ListProjectMedia)
+		admin.POST("/projects/:folderName/media", apiGroup.AdminApi.UploadProjectMedia)
+		admin.DELETE("/projects/:folderName/media/:mediaId", apiGroup.AdminApi.DeleteProjectMedia)
+		admin.POST("/projects/:folderName/media/:mediaId/move", apiGroup.AdminApi.MoveProjectMedia)
 
 		// zip package management (upload/update, download, delete)
-		admin.POST("/projects/:id/zip", apiGroup.AdminApi.UploadProjectZip)
-		admin.GET("/projects/:id/zip/:fileName", apiGroup.AdminApi.DownloadProjectZip)
-		admin.DELETE("/projects/:id/zip/:fileName", apiGroup.AdminApi.DeleteProjectZip)
+		admin.POST("/projects/:folderName/zip", apiGroup.AdminApi.UploadProjectZip)
+		admin.GET("/projects/:folderName/zip/:fileName", apiGroup.AdminApi.DownloadProjectZip)
+		admin.DELETE("/projects/:folderName/zip/:fileName", apiGroup.AdminApi.DeleteProjectZip)
 	}
 
 	return r

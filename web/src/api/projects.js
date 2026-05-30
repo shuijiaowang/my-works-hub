@@ -8,88 +8,87 @@ export const fetchAllProjects = () => {
   })
 }
 
-export const fetchProjectDetail = (id) => {
+export const fetchProjectDetail = (folderName) => {
   return service({
-    url: `/projects/${id}`,
+    url: `/projects/${encodeURIComponent(folderName)}`,
     method: 'get',
     donNotShowLoading: true,
   })
 }
 
-export const updateProject = (id, payload) => {
+export const updateProject = (folderName, payload) => {
   return service({
-    url: `/admin/projects/${id}`,
+    url: `/admin/projects/${encodeURIComponent(folderName)}`,
     method: 'put',
     data: payload,
   })
 }
 
-export const fetchProjectMedia = (id) => {
+export const fetchProjectMedia = (folderName) => {
   return service({
-    url: `/projects/${id}/media`,
+    url: `/projects/${encodeURIComponent(folderName)}/media`,
     method: 'get',
     donNotShowLoading: true,
   })
 }
 
-export const fetchAdminProjectMedia = (id) => {
+export const fetchAdminProjectMedia = (folderName) => {
   return service({
-    url: `/admin/projects/${id}/media`,
+    url: `/admin/projects/${encodeURIComponent(folderName)}/media`,
     method: 'get',
     donNotShowLoading: true,
   })
 }
 
-export const uploadProjectMedia = (id, file) => {
+export const uploadProjectMedia = (folderName, file) => {
   const form = new FormData()
   form.append('file', file)
   return service({
-    url: `/admin/projects/${id}/media`,
+    url: `/admin/projects/${encodeURIComponent(folderName)}/media`,
     method: 'post',
     data: form,
     headers: { 'Content-Type': 'multipart/form-data' },
   })
 }
 
-export const deleteProjectMedia = (id, mediaId) => {
+export const deleteProjectMedia = (folderName, mediaId) => {
   return service({
-    url: `/admin/projects/${id}/media/${mediaId}`,
+    url: `/admin/projects/${encodeURIComponent(folderName)}/media/${mediaId}`,
     method: 'delete',
   })
 }
 
-export const moveProjectMedia = (id, mediaId, direction) => {
+export const moveProjectMedia = (folderName, mediaId, direction) => {
   return service({
-    url: `/admin/projects/${id}/media/${mediaId}/move`,
+    url: `/admin/projects/${encodeURIComponent(folderName)}/media/${mediaId}/move`,
     method: 'post',
     data: { direction },
   })
 }
 
-export const uploadProjectZip = (id, file) => {
+export const uploadProjectZip = (folderName, file) => {
   const form = new FormData()
   form.append('file', file)
   return service({
-    url: `/admin/projects/${id}/zip`,
+    url: `/admin/projects/${encodeURIComponent(folderName)}/zip`,
     method: 'post',
     data: form,
     headers: { 'Content-Type': 'multipart/form-data' },
   })
 }
 
-export const deleteProjectZip = (id, fileName) => {
+export const deleteProjectZip = (folderName, fileName) => {
   return service({
-    url: `/admin/projects/${id}/zip/${encodeURIComponent(fileName)}`,
+    url: `/admin/projects/${encodeURIComponent(folderName)}/zip/${encodeURIComponent(fileName)}`,
     method: 'delete',
   })
 }
 
-export const downloadProjectZip = (id, fileName) => {
+export const downloadProjectZip = (folderName, fileName) => {
   return service({
-    url: `/admin/projects/${id}/zip/${encodeURIComponent(fileName)}`,
+    url: `/admin/projects/${encodeURIComponent(folderName)}/zip/${encodeURIComponent(fileName)}`,
     method: 'get',
     responseType: 'blob',
     donNotShowLoading: true,
   })
 }
-
